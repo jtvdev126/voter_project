@@ -1,3 +1,5 @@
+import pandas as pd
+
 # Create voter total to represent all of voting population
 voter_total = 0
 

@@ -12,3 +12,16 @@ ind_voter_total = 0
 
 # Create unregistered voter total
 unreg_voter_total = 0
+
+# Totals for age groups
+# age 18-25
+genz_voter_total = 0
+
+# age 26-44
+millenial_voter_total = 0
+
+# age 45-64
+genx_voter_total = 0
+
+# age 65+
+boomer_voter_total = 0

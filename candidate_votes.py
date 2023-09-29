@@ -1,3 +1,24 @@
+import sqlite3
+
+# Connect to or create an SQLite database
+conn = sqlite3.connect('voting_analysis.db')
+cursor = conn.cursor()
+
+def create_tables():
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS CandidateVotes (
+            CandidateName TEXT PRIMARY KEY,
+            Votes INT
+        )
+    ''')
+
+def update_database(candidate_votes):
+    for candidate, votes in candidate_votes.items():
+        cursor.execute("INSERT OR IGNORE INTO CandidateVotes VALUES (?, ?)", (candidate, 0))
+        cursor.execute("UPDATE CandidateVotes SET Votes = Votes + ? WHERE CandidateName = ?", (votes, candidate))
+
+    conn.commit()
+
 def tally_votes():
     candidate_votes = {}  # Dictionary to store candidate names and their respective votes
 
@@ -16,6 +37,13 @@ def tally_votes():
     for candidate, votes in candidate_votes.items():
         print(f"{candidate}: {votes} votes")
 
+    # Update the database with the vote tally
+    update_database(candidate_votes)
+
 if __name__ == "__main__":
-    print("Welcome to the Voting Polls")
+    print("Welcome to the Voting Polls Tally System")
+    create_tables()  # Ensure tables are created in the database
     tally_votes()
+
+    # Close the database connection
+    conn.close()

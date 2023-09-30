@@ -29,6 +29,8 @@ def analyze_votes():
         'income_levels': {'low': 0, 'middle': 0, 'high': 0}
     }
 
+    candidate_votes = {} # Dictionary to store candidate names and their respective votes
+
     while True:
         candidate_name = input("Enter candidate's name (or 'done' to finish): ").strip().lower()
 
@@ -52,6 +54,12 @@ def analyze_votes():
         if income in vote_data['income_levels']:
             vote_data['income_levels'][income] += 1
 
+        # Update candidate_votes for database update
+        if candidate_name in candidate_votes:
+            candidate_votes[candidate_name] += 1
+        else:
+            candidate_votes[candidate_name] = 1
+            
     print("Vote analysis based on demographics:")
     print("Political Party:")
     for party, votes in vote_data['parties'].items():

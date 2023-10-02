@@ -6,14 +6,8 @@ cursor = conn.cursor()
 
 def create_tables():
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS CandidateVotes (
+        CREATE TABLE IF NOT EXISTS Votes (
             CandidateName TEXT PRIMARY KEY,
-            Votes INT
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS DemographicVotes (
             Party TEXT,
             AgeGroup TEXT,
             Race TEXT,
@@ -22,30 +16,23 @@ def create_tables():
         )
     ''')
 
-def update_database(vote_data):
-    for party, votes in vote_data['parties'].items():
-        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (?, NULL, NULL, NULL, ?)", (party, votes))
+def update_database(candidate_votes):
+    for candidate, data in candidate_votes.items():
+        party = data.get('party', None)
+        age = data.get('age', None)
+        race = data.get('race', None)
+        income = data.get('income', None)
+        votes = data.get('votes', 0)
 
-    for age, votes in vote_data['ages'].items():
-        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, ?, NULL, NULL, ?)", (age, votes))
+        cursor.execute("INSERT OR IGNORE INTO Votes (CandidateName, Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (?, ?, ?, ?, ?, ?)",
+                       (candidate, party, age, race, income, votes))
 
-    for race, votes in vote_data['races'].items():
-        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, NULL, ?, NULL, ?)", (race, votes))
+        #cursor.execute("UPDATE Votes SET Votes = Votes + ? WHERE CandidateName = ?", (votes, candidate))
 
-    for income, votes in vote_data['income_levels'].items():
-        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, NULL, NULL, ?, ?)", (income, votes))
     conn.commit()
 
 def analyze_votes():
-    # Dictionary to store vote tallies based on different demographics
-    vote_data = {
-        'parties': {'democrat': 0, 'republican': 0, 'independent': 0},
-        'ages': {'under 18': 0, '18-30': 0, '31-50': 0, '51+': 0},
-        'races': {'white': 0, 'black': 0, 'asian': 0, 'other': 0},
-        'income_levels': {'low': 0, 'middle': 0, 'high': 0}
-    }
-
-    candidate_votes = {} # Dictionary to store candidate names and their respective votes
+    candidate_votes = {}  # Dictionary to store candidate names and their respective votes
 
     while True:
         candidate_name = input("Enter candidate's name (or 'done' to finish): ").strip().lower()
@@ -57,48 +44,28 @@ def analyze_votes():
         age = input("Enter voter's age group (18-30/31-50/51+): ").strip().lower()
         race = input("Enter voter's race (white/black/asian/other): ").strip().lower()
         income = input("Enter voter's income level (low/middle/high): ").strip().lower()
-
-        if party in vote_data['parties']:
-            vote_data['parties'][party] += 1
-
-        if age in vote_data['ages']:
-            vote_data['ages'][age] += 1
-
-        if race in vote_data['races']:
-            vote_data['races'][race] += 1
-
-        if income in vote_data['income_levels']:
-            vote_data['income_levels'][income] += 1
+        votes = int(input("Enter number of votes for this candidate: ").strip())
 
         # Update candidate_votes for database update
-        if candidate_name in candidate_votes:
-            candidate_votes[candidate_name] += 1
-        else:
-            candidate_votes[candidate_name] = 1
-            
+        candidate_votes[candidate_name] = {
+            'party': party,
+            'age': age,
+            'race': race,
+            'income': income,
+            'votes': votes
+        }
+
     print("Vote analysis based on demographics:")
-    print("Political Party:")
-    for party, votes in vote_data['parties'].items():
-        print(f"{party.capitalize()}: {votes} votes")
-
-    print("\nAge Group:")
-    for age, votes in vote_data['ages'].items():
-        print(f"{age.capitalize()}: {votes} votes")
-
-    print("\nRace:")
-    for race, votes in vote_data['races'].items():
-        print(f"{race.capitalize()}: {votes} votes")
-
-    print("\nIncome Level:")
-    for income, votes in vote_data['income_levels'].items():
-        print(f"{income.capitalize()}: {votes} votes")
+    print("Candidate Name | Party | Age Group | Race | Income Level")
+    for candidate, data in candidate_votes.items():
+        print(f"{candidate.capitalize()} | {data['party']} | {data['age']} | {data['race']} | {data['income']}")
 
     # Update the database with the vote tally
-    update_database(vote_data)
+    update_database(candidate_votes)
 
 if __name__ == "__main__":
     print("Welcome to the Voting Polls Demographic Analysis")
-    create_tables()  # Create tables first
+    create_tables()  # Create or update the table structure
     analyze_votes()  # Analyze votes and update the database
 
     # Close the database connection

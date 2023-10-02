@@ -26,7 +26,8 @@ def update_database(candidate_votes):
 
         cursor.execute("INSERT OR IGNORE INTO Votes (CandidateName, Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (?, ?, ?, ?, ?, ?)",
                        (candidate, party, age, race, income, votes))
-
+        
+        # Removed for causing double vote error
         #cursor.execute("UPDATE Votes SET Votes = Votes + ? WHERE CandidateName = ?", (votes, candidate))
 
     conn.commit()

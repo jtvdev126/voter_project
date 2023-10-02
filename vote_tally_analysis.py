@@ -12,13 +12,29 @@ def create_tables():
         )
     ''')
 
-def update_database(candidate_votes):
-    for candidate, votes in candidate_votes.items():
-        cursor.execute("INSERT OR IGNORE INTO CandidateVotes VALUES (?, ?)", (candidate, 0))
-        cursor.execute("UPDATE CandidateVotes SET Votes = Votes + ? WHERE CandidateName = ?", (votes, candidate))
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS DemographicVotes (
+            Party TEXT,
+            AgeGroup TEXT,
+            Race TEXT,
+            IncomeLevel TEXT,
+            Votes INT
+        )
+    ''')
 
+def update_database(vote_data):
+    for party, votes in vote_data['parties'].items():
+        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (?, NULL, NULL, NULL, ?)", (party, votes))
+
+    for age, votes in vote_data['ages'].items():
+        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, ?, NULL, NULL, ?)", (age, votes))
+
+    for race, votes in vote_data['races'].items():
+        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, NULL, ?, NULL, ?)", (race, votes))
+
+    for income, votes in vote_data['income_levels'].items():
+        cursor.execute("INSERT INTO DemographicVotes (Party, AgeGroup, Race, IncomeLevel, Votes) VALUES (NULL, NULL, NULL, ?, ?)", (income, votes))
     conn.commit()
-
 
 def analyze_votes():
     # Dictionary to store vote tallies based on different demographics
@@ -38,7 +54,7 @@ def analyze_votes():
             break
 
         party = input("Enter voter's political party (democrat/republican/independent): ").strip().lower()
-        age = input("Enter voter's age group (under 18/18-30/31-50/51+): ").strip().lower()
+        age = input("Enter voter's age group (18-30/31-50/51+): ").strip().lower()
         race = input("Enter voter's race (white/black/asian/other): ").strip().lower()
         income = input("Enter voter's income level (low/middle/high): ").strip().lower()
 
@@ -78,11 +94,12 @@ def analyze_votes():
         print(f"{income.capitalize()}: {votes} votes")
 
     # Update the database with the vote tally
-    update_database(candidate_votes)
+    update_database(vote_data)
 
 if __name__ == "__main__":
     print("Welcome to the Voting Polls Demographic Analysis")
-    analyze_votes()
+    create_tables()  # Create tables first
+    analyze_votes()  # Analyze votes and update the database
 
     # Close the database connection
     conn.close()
